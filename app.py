@@ -36,7 +36,7 @@ def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provi
 
 # ----------------- Streamlit UI -----------------
 st.set_page_config(page_title="Custom AI Chatbot", layout="centered")
-st.title("🤖 Custom AI Agent Chatbot")
+st.title("🤖 Custom AI Agent Chatbot2")
 st.write("Interact with your custom AI Agent using Groq / OpenAI + Web Search!")
 
 # System Prompt
