@@ -10,7 +10,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.messages.ai import AIMessage
 
 # ----------------- Backend Logic -----------------
-def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provider):
+def get_response_from_ai_agent(llm_id, query, allow_search, provider):
     if provider == "Groq":
         llm = ChatGroq(model=llm_id)
     elif provider == "OpenAI":
@@ -20,12 +20,10 @@ def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provi
 
     tools = [TavilySearchResults(max_results=2)] if allow_search else []
 
-    # state_modifier argument only works in updated langgraph version
-    # Ensure your Streamlit Cloud uses compatible langgraph-prebuilt==0.6.7
+    # system_prompt removed for langgraph-prebuilt==0.6.4
     agent = create_react_agent(
         model=llm,
-        tools=tools,
-        #system_prompt=system_prompt  # Keep this line with compatible version
+        tools=tools
     )
 
     state = {"messages": query}
@@ -78,7 +76,6 @@ with col1:
                     llm_id=selected_model,
                     query=[user_query],
                     allow_search=allow_web_search,
-                    system_prompt=system_prompt,
                     provider=provider
                 )
             st.subheader("Agent Response")
@@ -86,9 +83,12 @@ with col1:
 
 with col2:
     if st.button("🔄 Reset"):
-        st.session_state["system_prompt"] = ""
-        st.session_state["user_query"] = ""
+        # Clear session state safely
+        for key in list(st.session_state.keys()):
+            st.session_state[key] = None
         st.session_state["selected_model"] = "llama-3.3-70b-versatile"
         st.session_state["provider"] = "Groq"
         st.session_state["allow_web_search"] = False
-        st.experimental_rerun()
+        # Streamlit 1.49 me experimental_rerun() ka alternative
+        st.session_state["__rerun__"] = True
+        st.experimental_rerun()  # agar error aaye to comment kar do
