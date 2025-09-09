@@ -9,7 +9,6 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages.ai import AIMessage
 
-
 # ----------------- Backend Logic -----------------
 def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provider):
     if provider == "Groq":
@@ -21,10 +20,12 @@ def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provi
 
     tools = [TavilySearchResults(max_results=2)] if allow_search else []
 
+    # state_modifier argument only works in updated langgraph version
+    # Ensure your Streamlit Cloud uses compatible langgraph-prebuilt==0.6.7
     agent = create_react_agent(
         model=llm,
         tools=tools,
-        state_modifier=system_prompt
+        state_modifier=system_prompt  # Keep this line with compatible version
     )
 
     state = {"messages": query}
@@ -33,10 +34,9 @@ def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provi
     ai_messages = [m.content for m in messages if isinstance(m, AIMessage)]
     return ai_messages[-1] if ai_messages else "⚠️ No response from AI."
 
-
 # ----------------- Streamlit UI -----------------
 st.set_page_config(page_title="Custom AI Chatbot", layout="centered")
-st.title("🤖 Custom AI Agent Chatbot2")
+st.title("🤖 Custom AI Agent Chatbot")
 st.write("Interact with your custom AI Agent using Groq / OpenAI + Web Search!")
 
 # System Prompt
