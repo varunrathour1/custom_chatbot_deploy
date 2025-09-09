@@ -12,26 +12,35 @@ from langchain_core.messages.ai import AIMessage
 
 # ----------------- Backend Logic -----------------
 def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provider):
-    if provider == "Groq":
-        llm = ChatGroq(model=llm_id)
-    elif provider == "OpenAI":
-        llm = ChatOpenAI(model=llm_id)
-    else:
-        return "❌ Invalid provider"
+    try:
+        # Select model provider
+        if provider == "Groq":
+            llm = ChatGroq(model=llm_id)
+        elif provider == "OpenAI":
+            llm = ChatOpenAI(model=llm_id)
+        else:
+            return "❌ Invalid provider"
 
-    tools = [TavilySearchResults(max_results=2)] if allow_search else []
+        # Tools (optional search)
+        tools = [TavilySearchResults(max_results=2)] if allow_search else []
 
-    agent = create_react_agent(
-        model=llm,
-        tools=tools,
-        state_modifier=system_prompt
-    )
+        # Create agent (system prompt now via messages_modifier)
+        agent = create_react_agent(
+            model=llm,
+            tools=tools,
+            messages_modifier=system_prompt if system_prompt else None
+        )
 
-    state = {"messages": query}
-    response = agent.invoke(state)
-    messages = response.get("messages")
-    ai_messages = [m.content for m in messages if isinstance(m, AIMessage)]
-    return ai_messages[-1] if ai_messages else "⚠️ No response from AI."
+        # State with user query
+        state = {"messages": query}
+        response = agent.invoke(state)
+
+        messages = response.get("messages", [])
+        ai_messages = [m.content for m in messages if isinstance(m, AIMessage)]
+        return ai_messages[-1] if ai_messages else "⚠️ No response from AI."
+
+    except Exception as e:
+        return f"⚠️ Error: {str(e)}"
 
 
 # ----------------- Streamlit UI -----------------
@@ -86,9 +95,5 @@ with col1:
 
 with col2:
     if st.button("🔄 Reset"):
-        st.session_state["system_prompt"] = ""
-        st.session_state["user_query"] = ""
-        st.session_state["selected_model"] = "llama-3.3-70b-versatile"
-        st.session_state["provider"] = "Groq"
-        st.session_state["allow_web_search"] = False
+        st.session_state.clear()
         st.experimental_rerun()
