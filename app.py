@@ -20,7 +20,6 @@ def get_response_from_ai_agent(llm_id, query, allow_search, provider):
 
     tools = [TavilySearchResults(max_results=2)] if allow_search else []
 
-    # system_prompt not supported in langgraph-prebuilt==0.6.4
     agent = create_react_agent(
         model=llm,
         tools=tools
@@ -35,7 +34,7 @@ def get_response_from_ai_agent(llm_id, query, allow_search, provider):
 # ----------------- Streamlit UI -----------------
 st.set_page_config(page_title="Custom AI Chatbot", layout="centered")
 st.title("🤖 Custom AI Agent Chatbot")
-st.write("Interact with your custom AI Agent using Groq / OpenAI + Web Search!")
+st.write("Interact with your AI Agent using Groq/OpenAI + Web Search!")
 
 # Initialize session_state
 if "system_prompt" not in st.session_state:
@@ -114,11 +113,11 @@ with col1:
 
 with col2:
     if st.button("🔄 Reset"):
-        # Reset all session_state variables
+        # Reset session_state variables
         st.session_state["system_prompt"] = ""
         st.session_state["user_query"] = ""
         st.session_state["selected_model"] = "llama-3.3-70b-versatile"
         st.session_state["provider"] = "Groq"
         st.session_state["allow_web_search"] = False
-        # Streamlit 1.49.1 compatible: no rerun
-        st.experimental_set_query_params()
+        # Clear query params (Streamlit 1.49.1+ compatible)
+        st.query_params.clear()
