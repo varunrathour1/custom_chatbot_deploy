@@ -12,35 +12,26 @@ from langchain_core.messages.ai import AIMessage
 
 # ----------------- Backend Logic -----------------
 def get_response_from_ai_agent(llm_id, query, allow_search, system_prompt, provider):
-    try:
-        # Select model provider
-        if provider == "Groq":
-            llm = ChatGroq(model=llm_id)
-        elif provider == "OpenAI":
-            llm = ChatOpenAI(model=llm_id)
-        else:
-            return "❌ Invalid provider"
+    if provider == "Groq":
+        llm = ChatGroq(model=llm_id)
+    elif provider == "OpenAI":
+        llm = ChatOpenAI(model=llm_id)
+    else:
+        return "❌ Invalid provider"
 
-        # Tools (optional search)
-        tools = [TavilySearchResults(max_results=2)] if allow_search else []
+    tools = [TavilySearchResults(max_results=2)] if allow_search else []
 
-        # Create agent (system prompt now via messages_modifier)
-        agent = create_react_agent(
-            model=llm,
-            tools=tools,
-            messages_modifier=system_prompt if system_prompt else None
-        )
+    agent = create_react_agent(
+        model=llm,
+        tools=tools,
+        state_modifier=system_prompt
+    )
 
-        # State with user query
-        state = {"messages": query}
-        response = agent.invoke(state)
-
-        messages = response.get("messages", [])
-        ai_messages = [m.content for m in messages if isinstance(m, AIMessage)]
-        return ai_messages[-1] if ai_messages else "⚠️ No response from AI."
-
-    except Exception as e:
-        return f"⚠️ Error: {str(e)}"
+    state = {"messages": query}
+    response = agent.invoke(state)
+    messages = response.get("messages")
+    ai_messages = [m.content for m in messages if isinstance(m, AIMessage)]
+    return ai_messages[-1] if ai_messages else "⚠️ No response from AI."
 
 
 # ----------------- Streamlit UI -----------------
@@ -95,5 +86,9 @@ with col1:
 
 with col2:
     if st.button("🔄 Reset"):
-        st.session_state.clear()
+        st.session_state["system_prompt"] = ""
+        st.session_state["user_query"] = ""
+        st.session_state["selected_model"] = "llama-3.3-70b-versatile"
+        st.session_state["provider"] = "Groq"
+        st.session_state["allow_web_search"] = False
         st.experimental_rerun()
